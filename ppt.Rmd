@@ -1,0 +1,95 @@
+---
+title: "Coursera Data Science Capstone Project"
+author: "Jie Li"
+date: "July 26, 2018"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Project Overview
+
+The goal of the project is a text prediction shiny application which identifies the next word of a user specified incomplete sentence. 
+
+The project work was divided into steps which are follows:
+
+Loading the data and exploratory analysis.
+Combining the data into a corpus and cleansing it.
+Extracting N-grams and storing them as dataframes in decreasing order of frequency.
+Cleansing the user specified input sentence.
+Creation of predictive model.
+Creation of Shiny app
+
+## Model Concept
+
+The Text Prediction Application was based on the N-Gram Backoff model concept.
+
+N-grams are contiguous sequences of letters or words from a given sample of text or speech. For example, the text of "I eat apples" for the unigrams will be, "I", "eat" and "apples", the corresponding bigrams will be "I eat", "eat apples" and the corresponding trigram will be "I eat apples".
+
+Unigrams, bigrams, trigrams and fourgrams were extracted in the form of dataframes from the corpus and were listed in decreasing order of frequency. The prediction model was built using the n-gram backoff model which is as follows:
+
+Starting with n = 4, since we have extracted upto fourgrams from the corpus, the algorithm takes the last n-1 last words from the user specified sentence and matches it with the first n-1 words of fourgram in the fourgram dataframe. The matches with the three highest frequencies are returned and the next words of those fourgrams are the three words most likely of being the next word of the user specified input sentence.
+
+If no match is found, the algorithm backs to the next lower level (n = 3), the trigram dataframe, and the same process is repeated. If no matches are found, the algorithm continues backing off until the until the unigram dataframe (n = 1) is reached. In this case the 3 most frequent words are the three words most likely of being the next word of the user specified input sentence.
+
+
+## Shiny Application
+
+The Shiny Application consists of a text box where the user feeds in the incomplete sentence. The predicted sentence will be printed on the right hand side of the textbox. The dataframe used for prediction is also stated.
+
+```{r echo = FALSE}
+shinyApp(
+
+
+
+ui=fluidPage(
+  
+  titlePanel("Data Science Coursera Capstone"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      textInput("text", 
+                h4(" "),
+                value = "Enter text here")
+    ),
+    mainPanel(
+      h4("Do you mean:"),
+      textOutput("text1") 
+        
+    )
+  )
+),
+df_list <- readRDS("list.rds"),
+source("predicte.R", local = TRUE),
+server=function(input, output) {
+  
+  prediction <- reactive( {
+    predict(input$text)
+  })
+  
+  output$prediction <- renderPrint(prediction())
+  #output$text1 <- renderText({paste("Input Sentence: ", input$text)});
+  
+  output$text1 = renderText({
+    paste(input$text, prediction())
+  })
+}
+)
+```
+
+## Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## R Output
+
+```{r cars}
+summary(cars)
+```
+
+

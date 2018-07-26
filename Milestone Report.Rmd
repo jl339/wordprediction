@@ -1,0 +1,143 @@
+---
+title: "Milestone Report"
+author: "Jie Li"
+date: "July 23, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## load packages
+```{r}
+
+setwd("C:/Users/jl339/Desktop/datascience/final")
+
+library(stringi)
+library(NLP)
+library(tm)
+library(fpc)
+library(RColorBrewer)
+library(wordcloud)
+library(ggplot2)
+library(data.table)
+library(dplyr)
+library(tidytext)
+library(stringr)
+
+```
+
+
+
+## read the three data sets by using UTF-8 encoding
+
+```{r}
+
+twitter <- readLines(con <- file("./en_US/en_US.twitter.txt"), encoding = "UTF-8", skipNul = TRUE)
+close(con)
+blogs <- readLines(con2 <- file("./en_US/en_US.blogs.txt"), encoding = "UTF-8", skipNul = TRUE)
+close(con2)
+news <- readLines(con3 <- file("./en_US/en_US.news.txt"), encoding = "UTF-8", skipNul = TRUE)
+close(con3)
+
+```
+
+
+
+##Basic Summary of The Dataset
+```{r}
+b <- file.size("./en_US/en_US.blogs.txt")
+n <- file.size("./en_US/en_US.news.txt")
+t <- file.size("./en_US/en_US.twitter.txt")
+m <- matrix(c(NROW(blogs),NROW(news),NROW(twitter),sum(nchar(blogs)),sum(nchar(news)),sum(nchar(twitter)),(b/1024^2),(n/1024^2),(t/1024^2)),byrow = FALSE,nrow=3,ncol=3,dimnames = list(c("blogs","news","twitter"),c("No.Of Lines","No. Of Characters","File Size in Mb")))
+Wordcount <- sapply(list(blogs,news,twitter),stri_stats_latex)['Words',]
+BasicSummary <- cbind(m,Wordcount)
+BasicSummary
+```
+
+
+## This is a typical character vector that we might want to analyze. In order to turn it into a tidy text dataset, we first need to put it into a data frame. 
+
+```{r}
+#simplfiy the dataset
+factor <- 0.01
+blogs1 <- sample(blogs,round(factor*length(blogs)))
+news1 <- sample(news,round(factor*length(news)))
+twitter1 <- sample(twitter,round(factor*length(twitter)))
+set.seed(233)
+data1<-c(blogs1,news1,twitter1)
+data<-data_frame(line = 1:length(data1),data1)
+colnames(data)<-c("line","text")
+head(data)
+
+
+## we need to both break the text into individual tokens
+tidy_data<-data%>%  unnest_tokens(word, text)
+head(tidy_data)
+
+## remove stop words such as to, the, of
+
+data(stop_words)
+
+tidy_data <- tidy_data %>%  anti_join(stop_words)
+##then we can count the word frequence
+tidy_data.fq<-tidy_data %>%
+  count(word, sort = TRUE) 
+head(tidy_data.fq)
+```
+
+## plot the word frequence of unigram
+
+```{r}
+##top 5 words 
+ggplot(head(tidy_data.fq,5),aes(word, n))+  geom_point() 
+
+```
+
+
+#N-gram
+```{r}
+#bigram
+bi.data<- data %>%
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+
+bi.data.fq<-bi.data %>%
+  count(bigram, sort = TRUE) 
+
+
+#trigram
+tri.data<- data %>%
+  unnest_tokens(trigram, text, token = "ngrams", n = 3)
+
+tri.data.fq<-tri.data %>%
+  count(trigram, sort = TRUE) 
+tri.data.fq<-na.omit(tri.data.fq)
+
+#quagram
+quar.data<- data %>%
+  unnest_tokens(quargram, text, token = "ngrams", n = 4)
+quar.data.fq<-quar.data %>%
+  count(quargram, sort = TRUE) 
+quar.data.fq<-na.omit(quar.data.fq)
+
+```
+
+## plot the word frequence of bigram
+
+```{r}
+##top 5 words 
+ggplot(head(bi.data.fq,5),aes(bigram, n))+  geom_point() 
+
+```
+
+
+## plot the word frequence of trigram
+
+```{r}
+##top 5 words 
+ggplot(head(tri.data.fq,5),aes(trigram, n))+  geom_point() 
+
+```
+
